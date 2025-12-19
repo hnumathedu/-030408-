@@ -138,10 +138,34 @@
             border: 5px solid #5856d6;
             min-height: 100vh;
         }
-
+		
         .admin-only-controls {
             display: none;
             margin-top: 10px;
+        }
+
+		/* 📱 모바일 최적화 코드 */
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .title-container { padding: 20px 0; }
+            h1 { font-size: 1.2em; line-height: 1.4; padding: 0 10px; width: 100%; word-break: keep-all; }
+            
+            .main-container { gap: 15px; }
+            .form-section, .calendar-section { 
+                flex: none; 
+                width: 100%; 
+                min-width: 0 !important; 
+                padding: 20px; 
+            }
+            
+            .fc { height: 500px !important; }
+            .fc-toolbar-title { font-size: 0.9em !important; }
+            
+            .table-section { padding: 15px; margin: 20px auto; overflow-x: auto; }
+            table { min-width: 650px; } /* 테이블이 깨지지 않게 가로 스크롤 허용 */
+            
+            .time-select-container { flex-wrap: nowrap; }
+            select { padding: 8px; font-size: 14px; }
         }
     </style>
 </head>
@@ -537,3 +561,4 @@
 </script>
 </body>
 </html>
+
