@@ -149,20 +149,34 @@
             body { padding: 10px; }
             .title-container { padding: 20px 0; }
             h1 { font-size: 1.2em; line-height: 1.4; padding: 0 10px; width: 100%; word-break: keep-all; }
-    
+
             .main-container { gap: 15px; }
             .form-section, .calendar-section { 
                 flex: none; 
                 width: 100%; 
                 min-width: 0 !important; 
-                padding: 15px; /* 패딩 축소 */
+                padding: 15px; 
             }
-    
-            /* 캘린더 높이 및 글자 크기 조정 */
-            .fc { height: auto !important; font-size: 11px; } 
-            .fc-toolbar-title { font-size: 0.9em !important; }
-            .fc-daygrid-day-number { padding: 5px !important; font-size: 0.85em !important; }
-    
+
+            /* 🔥 달력 움직이게(스크롤) 만드는 핵심 코드 */
+            .calendar-section {
+                overflow-x: auto; /* 좌우 스크롤 허용 */
+                -webkit-overflow-scrolling: touch; /* iOS 부드러운 스크롤 */
+            }
+
+            #calendar {
+                min-width: 600px; /* 달력이 찌그러지지 않도록 최소 너비 고정 */
+                font-size: 12px;
+            }
+
+            /* 캘린더 툴바(제목, 버튼)가 스크롤해도 따라오게 하려면 */
+            .fc-header-toolbar {
+                position: sticky;
+                left: 0;
+                width: 100%;
+                margin-bottom: 10px !important;
+            }
+
             /* 오늘 날짜 표시 동그라미 크기 조절 */
             .fc-day-today .fc-daygrid-day-number {
                 min-width: 24px;
@@ -170,8 +184,10 @@
                 margin: 2px 0 0 2px !important;
             }
 
+            /* 리스트 테이블 섹션 */
             .table-section { padding: 15px; margin: 20px auto; overflow-x: auto; }
             table { min-width: 600px; } 
+        } 
     
             .time-select-container { flex-wrap: nowrap; }
             select { padding: 8px; font-size: 14px; }
