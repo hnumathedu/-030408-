@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>030408호 실습실 예약 시스템</title>
+
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js'></script>
+
+    <style>
+        /* 📱 iOS 감성 공통 레이아웃 */
+        * { box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Pretendard", sans-serif; padding: 20px; background-color: #f2f2f7; margin: 0; color: #1c1c1e; }
+        .title-container { text-align: center; padding: 40px 0; }
+        h1 { display: inline-block; color: #000; font-weight: 700; letter-spacing: -0.5px; cursor: default; user-select: none; margin: 0; font-size: 1.8em; }
+        
+        .main-container { display: flex; gap: 25px; max-width: 1300px; margin: 0 auto; flex-wrap: wrap; }
+        .form-section, .calendar-section { background: white; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); border: none; }
+        .form-section { flex: 1; min-width: 320px; padding: 30px; height: fit-content; }
+        .calendar-section { flex: 2.5; min-width: 600px; padding: 20px; }
+        
+        h3 { margin-top: 0; color: #007aff; font-size: 1.2em; margin-bottom: 20px; font-weight: 600; }
+        .form-group { margin-bottom: 18px; }
+        label { display: block; margin-bottom: 6px; font-weight: 500; font-size: 0.85em; color: #8e8e93; }
+        input, select { width: 100%; padding: 12px; border: 1px solid #d1d1d6; border-radius: 10px; font-size: 15px; background: #fdfdfd; outline: none; transition: border 0.2s; -webkit-appearance: none; }
+        input:focus, select:focus { border-color: #007aff; }
+
+        .time-select-container { display: flex; align-items: center; gap: 5px; }
+        .time-select-container span { font-size: 0.8em; color: #1c1c1e; }
+        
+        #submitBtn { width: 100%; padding: 15px; background: #007aff; color: white; border: none; border-radius: 12px; cursor: pointer; font-size: 16px; font-weight: 600; margin-top: 10px; transition: opacity 0.2s; }
+        #submitBtn:active { opacity: 0.7; }
+        #submitBtn:disabled { background: #aeaeb2; cursor: not-allowed; }
+
+        /* 🗓️ iOS 스타일 FullCalendar 커스텀 */
+        .fc { border: none !important; }
+        .fc-toolbar-title { font-size: 1.1em !important; font-weight: 700 !important; color: #1c1c1e; }
+        .fc .fc-button-primary { background-color: #e9e9eb !important; border: none !important; color: #007aff !important; font-weight: 600 !important; border-radius: 8px !important; padding: 6px 12px; }
+        .fc .fc-button-active { background-color: #007aff !important; color: white !important; }
+        .fc-col-header-cell-cushion { color: #8e8e93 !important; font-size: 0.8em; font-weight: 600; text-decoration: none !important; }
+        .fc-daygrid-day-number { padding: 10px 12px !important; font-weight: 500 !important; color: #1c1c1e !important; text-decoration: none !important; font-size: 0.9em; display: inline-block !important; width: fit-content; }
+        
+        .fc-day-sun .fc-col-header-cell-cushion, .fc-day-sun .fc-daygrid-day-number { color: #ff3b30 !important; }
+        .fc-day-sat .fc-col-header-cell-cushion, .fc-day-sat .fc-daygrid-day-number { color: #007aff !important; }
+        
+        .fc-day-today { background-color: transparent !important; }
+        .fc-day-today .fc-daygrid-day-number { color: white !important; background-color: #ff3b30 !important; border-radius: 50% !important; min-width: 32px; height: 32px; display: flex !important; align-items: center; justify-content: center; margin: 4px 0 0 4px !important; padding: 0 !important; }
+        
+        .fc-event { background: #f0f7ff !important; border: none !important; border-left: 3px solid #007aff !important; border-radius: 4px !important; margin: 2px 4px !important; }
+        .event-item-custom { padding: 3px 6px; color: #007aff; display: flex; align-items: center; gap: 5px; overflow: hidden; white-space: nowrap; }
+        .event-time-tag { font-weight: 700; font-size: 10px; flex-shrink: 0; }
+        .event-title-tag { font-weight: 500; font-size: 11px; text-overflow: ellipsis; overflow: hidden; }
+
+        /* 리스트 테이블 스타일 */
+        .table-section { max-width: 1300px; margin: 40px auto; background: white; padding: 30px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        .table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        
+        /* 🔄 새로고침 버튼 스타일 */
+        .refresh-btn { 
+            display: flex; align-items: center; gap: 6px; background: #f2f2f7; border: none; padding: 8px 14px; 
+            border-radius: 10px; color: #007aff; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s; 
+        }
+        .refresh-btn:hover { background: #e5e5ea; }
+        .refresh-btn:active { transform: scale(0.95); }
+        .refresh-btn svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+        .refresh-btn.loading svg { transform: rotate(360deg); }
+
+        table { width: 100%; border-collapse: collapse; }
+        th { color: #8e8e93; font-weight: 500; font-size: 0.85em; padding: 15px; border-bottom: 1px solid #f2f2f7; }
+        td { text-align: center; padding: 15px; border-bottom: 1px solid #f2f2f7; font-size: 14px; }
+        
+        .cancel-btn { background: #f2f2f7; color: #ff3b30; border: none; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600; transition: background 0.2s; }
+        .cancel-btn:hover { background: #ffebeb; }
+        
+        .admin-id { font-weight: 600; color: #007aff; }
+
+        /* 💡 상태별 행 스타일 */
+       .row-past { background-color: #fafafa; color: #aeaeb2; } /* 지난 예약: 배경 회색, 글자 흐리게 */
+       .row-past .cancel-btn { display: none; } /* 지난 예약은 취소 버튼 숨김 */
+
+       /* 🏷️ 상태 태그 디자인 */
+       .status-tag { 
+           padding: 4px 10px; 
+           border-radius: 6px; 
+           font-size: 11px; 
+           font-weight: 700; 
+       }
+
+       /* 상태별 색상 상세 정의 */
+       .tag-now { background: #e1f7e7; color: #34c759; }      /* 진행 중 (초록) */
+       .tag-upcoming { background: #e1f0ff; color: #007aff; } /* 예정 (파랑) */
+       .tag-past { background: #efeff4; color: #8e8e93; }     /* 종료 (회색) */
+
+       /* 지난 예약 행 스타일 */
+       .row-past { background-color: #f9f9fb; color: #aeaeb2; }
+       .row-past .cancel-btn { display: none !important; }
+
+       /* 진행 중인 예약도 취소를 막고 싶다면 아래 주석을 해제하세요 */
+       .tag-now + .cancel-btn { display: none; }
+
+      /* 🔐 관리자 모드 전용 스타일 */
+        .admin-badge {
+            display: none;
+            background: #5856d6;
+            color: white;
+            font-size: 12px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            margin-left: 10px;
+            vertical-align: middle;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(88, 86, 214, 0.3);
+        }
+
+        /* 관리자 해제 버튼 스타일 */
+        .admin-exit-btn {
+            display: none; /* 기본적으로 숨김 */
+            background: #f2f2f7;
+            color: #5856d6;
+            border: 1px solid #5856d6;
+            padding: 4px 10px;
+            border-radius: 15px;
+            margin-left: 8px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 600;
+            vertical-align: middle;
+            transition: all 0.2s;
+        }
+
+        .admin-exit-btn:hover {
+            background: #5856d6;
+            color: white;
+        }
+
+        /* 관리자 모드 활성 시 테두리 */
+        body.admin-active {
+            border: 5px solid #5856d6;
+            min-height: 100vh;
+        }
+
+        .admin-only-controls {
+            display: none;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="title-container">
+    <h1 ondblclick="checkAdmin()"> 
+        다목적 AIDT 수학교구실습실(030408호) 예약 시스템 
+        <span id="adminBadge" class="admin-badge">🔒 관리자 모드</span>
+        <button id="adminExitBtn" class="admin-exit-btn" onclick="exitAdmin()">해제</button>
+    </h1>
+</div>
+
+<div class="main-container">
+    <div class="form-section">
+        <h3>📅 예약 신청</h3>
+        <p style="font-size: 0.82em; color: #8e8e93; margin-bottom: 20px; line-height: 1.5;">
+            * 운영 시간: <b>09:00 ~ 18:50</b><br>
+            * 오늘부터 <b>6주 이내</b>의 평일만 예약 가능합니다.<br>
+            * 취소 시 예약 시 설정한 <b>비밀번호</b>가 필요합니다.<br>
+	* <b>문의사항: 042-629-8548</b>
+        </p>
+        <form id="reservationForm">
+            <div class="form-group">
+                <label>학번</label>
+                <input type="text" id="studentId" placeholder="20241234" minlength="8" maxlength="8" oninput="this.value = this.value.replace(/[^0-9]/g, '');" required>
+            </div>
+            <div class="form-group"><label>이름</label><input type="text" id="name" placeholder="김수교" required></div>
+            <div class="form-group"><label>인원수</label><input type="number" id="people" min="1" max="8" value="1" required></div>
+            <div class="form-group"><label>날짜</label><input type="date" id="date" required></div>
+            
+            <div style="display: flex; gap: 10px; margin-bottom: 18px;">
+                <div style="flex: 1;">
+                    <label>시작 시간</label>
+                    <div class="time-select-container">
+                        <select id="startHour" required></select><span>시</span>
+                        <select id="startMin" required></select><span>분</span>
+                    </div>
+                </div>
+                <div style="flex: 1;">
+                    <label>종료 시간</label>
+                    <div class="time-select-container">
+                        <select id="endHour" required></select><span>시</span>
+                        <select id="endMin" required></select><span>분</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>예약취소 비밀번호 설정 (숫자 4자리)</label>
+                <input type="password" id="password" placeholder="****" maxlength="4" oninput="this.value = this.value.replace(/[^0-9]/g, '');" required>
+            </div>
+            
+            <button type="submit" id="submitBtn">예약하기</button>
+        </form>
+    </div>
+    <div class="calendar-section"><div id='calendar'></div></div>
+</div>
+
+<div class="table-section">
+    <div class="table-header">
+        <div>
+            <h3>📋 예약 리스트 (취소 가능)</h3>
+            <span id="listMonthIndicator" style="font-size: 0.85em; color:#8e8e93;">데이터 로딩 중...</span>
+        </div>
+        <button class="refresh-btn" id="refreshBtn" onclick="handleRefresh()">
+            <svg viewBox="0 0 24 24"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"></path></svg>
+            새로고침
+        </button>
+    </div>
+    <table id="reservationTable">
+        <thead>
+            <tr>
+                <th>상태</th><th>학번</th><th>이름</th><th>인원</th><th>날짜</th><th>시간</th><th>취소</th>
+	    </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzCUzc0RavySHdTy-KUXQ18mx-hPz5sN8gSIV8oQnRhvob1SmWN9Y_fo_MhIqi1hv28/exec"; 
+    let reservations = [];
+    let calendar;
+    let isAdmin = false;
+    let currentViewYear = new Date().getFullYear();
+    let currentViewMonth = new Date().getMonth();
+
+    // 시간 드롭다운 생성
+    function populateSplitTimeDropdowns() {
+        const startHour = document.getElementById('startHour');
+        const endHour = document.getElementById('endHour');
+        const minIds = ['startMin', 'endMin'];
+        const hours = Array.from({length: 10}, (_, i) => String(i + 9).padStart(2, '0')); 
+        
+        [startHour, endHour].forEach(select => {
+            select.innerHTML = hours.map(h => `<option value="${h}">${h}</option>`).join('');
+        });
+        minIds.forEach(id => {
+            const select = document.getElementById(id);
+            select.innerHTML = ['00','10','20','30','40','50'].map(m => `<option value="${m}">${m}</option>`).join('');
+        });
+        startHour.value = "09";
+        endHour.value = "10";
+    }
+
+    // 🔓관리자 모드(보안 강화)
+    async function checkAdmin() {
+        const pw = prompt("관리자 비밀번호를 입력하세요.");
+        if (pw === null) return;
+
+        try {
+            const response = await fetch(SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: "adminCheck", password: pw })
+            });
+
+            const result = await response.json();
+
+            if (result.isAdmin) {
+                isAdmin = true;
+                alert("관리자 모드 활성화");
+                
+                // UI 업데이트: 보라색 테마 적용
+                document.body.classList.add('admin-active'); 
+                document.getElementById('adminBadge').style.display = 'inline-block'; // 🔒 배지 표시
+                document.getElementById('adminExitBtn').style.display = 'inline-block'; // [해제] 버튼 표시
+                
+                updateTable(); // 학번 마스킹 해제를 위해 테이블 갱신
+            } else {
+                alert("비밀번호가 틀렸습니다.");
+            }
+        } catch (e) {
+            console.error(e);
+            alert("확인 중 오류가 발생했습니다.");
+        }
+    }
+
+    // 🔓 관리자 모드 해제 함수 (수정본)
+    function exitAdmin() {
+        isAdmin = false;
+        
+        // UI 업데이트: 일반 모드로 복구
+        document.body.classList.remove('admin-active');
+        document.getElementById('adminBadge').style.display = 'none';
+        document.getElementById('adminExitBtn').style.display = 'none'; // [해제] 버튼 숨김
+        
+        alert("관리자 모드가 해제되었습니다.");
+        updateTable(); // 학번 다시 마스킹 처리
+    }
+
+    // 새로고침 버튼 핸들러
+    async function handleRefresh() {
+        const btn = document.getElementById('refreshBtn');
+        btn.classList.add('loading');
+        btn.disabled = true;
+        await loadReservations();
+        setTimeout(() => {
+            btn.classList.remove('loading');
+            btn.disabled = false;
+        }, 500);
+    }
+
+    // 달력 초기화
+    function initCalendar() {
+        const dateInput = document.getElementById('date');
+        const now = new Date();
+        const sixWeeksLater = new Date();
+        sixWeeksLater.setDate(now.getDate() + 42);
+        dateInput.min = now.toISOString().split('T')[0];
+        dateInput.max = sixWeeksLater.toISOString().split('T')[0];
+
+        calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
+            initialView: 'dayGridMonth',
+            locale: 'ko',
+            height: '650px',
+            headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek' },
+            slotMinTime: '09:00:00',
+            slotMaxTime: '19:00:00',
+            allDaySlot: false,
+            datesSet: (info) => {
+                currentViewYear = info.view.currentStart.getFullYear();
+                currentViewMonth = info.view.currentStart.getMonth();
+                document.getElementById('listMonthIndicator').innerText = `${currentViewYear}년 ${currentViewMonth + 1}월 예약`;
+                updateTable();
+            },
+            eventContent: (arg) => {
+                let timeStr = arg.event.start.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
+                return { html: `<div class="event-item-custom"><span class="event-time-tag">${timeStr}</span><span class="event-title-tag">${arg.event.title}</span></div>` };
+            }
+        });
+        calendar.render();
+    }
+
+    // 데이터 로드
+    async function loadReservations() {
+        try {
+            const response = await fetch(SCRIPT_URL);
+            const data = await response.json();
+            reservations = data.filter(r => r.studentId && r.name && String(r.studentId) !== "undefined"); 
+            updateCalendar();
+            updateTable();
+        } catch (e) { console.error("데이터 로드 실패"); }
+    }
+
+    function updateCalendar() {
+        const events = reservations.map(r => ({
+            title: `${r.name}(${r.people}명)`,
+            start: `${r.date}T${r.startTime}`, end: `${r.date}T${r.endTime}`, allDay: false
+        }));
+        calendar.removeAllEvents();
+        calendar.addEventSource(events);
+    }
+
+    // ✅ [수정된 테이블 업데이트 함수]
+    function updateTable() {
+        const tbody = document.querySelector('#reservationTable tbody');
+        tbody.innerHTML = '';
+        const now = new Date();
+
+        const filtered = reservations.filter(r => {
+            const rDate = new Date(r.date + "T00:00:00");
+            return rDate.getFullYear() === currentViewYear && rDate.getMonth() === currentViewMonth;
+        }).map(r => {
+            const startFull = new Date(`${r.date}T${r.startTime}`);
+            const endFull = new Date(`${r.date}T${r.endTime}`);
+
+            let status = "예정";
+            let statusClass = "tag-upcoming";
+            let isPast = false;
+
+            if (now > endFull) {
+                status = "종료";
+                statusClass = "tag-past";
+                isPast = true;
+            } else if (now >= startFull && now <= endFull) {
+                status = "진행 중";
+                statusClass = "tag-now";
+                isPast = false;
+            }
+
+            return { ...r, status, statusClass, isPast, startFull };
+        }).sort((a, b) => {
+            // ✅ 종료된 예약은 뒤로, 나머지는 시간순 정렬
+            if (a.isPast !== b.isPast) return a.isPast ? 1 : -1;
+            return a.startFull - b.startFull;
+        });
+
+        if (filtered.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" style="color:#8e8e93; padding: 40px;">예약이 없습니다.</td></tr>`;
+            return;
+        }
+
+        filtered.forEach((r) => {
+            const displayId = isAdmin ? r.studentId : (r.studentId.toString().substring(0, 4) + "****");
+            const idClass = isAdmin ? 'class="admin-id"' : '';
+            const rowClass = r.isPast ? 'class="row-past"' : '';
+    
+            // ✅ 진행 중이거나 지난 예약이면 취소 버튼 숨기기 (관리자 제외)
+            const hideCancel = (r.isPast || r.status === "진행 중") && !isAdmin;
+            
+            // 데이터를 안전하게 보관하여 삭제 함수로 전달 (순서 꼬임 방지 핵심)
+            const rDataString = JSON.stringify(r).replace(/"/g, '&quot;');
+            const cancelBtnHtml = hideCancel ? '' : `<button class="cancel-btn" onclick="deleteReservation('${rDataString}')">취소</button>`;
+
+            tbody.innerHTML += `
+                <tr ${rowClass}>
+                    <td><span class="status-tag ${r.statusClass}">${r.status}</span></td>
+                    <td ${idClass}>${displayId}</td>
+                    <td>${r.name}</td>
+                    <td>${r.people}명</td>
+                    <td>${r.date}</td>
+                    <td>${r.startTime}~${r.endTime}</td>
+                    <td>${cancelBtnHtml}</td>
+                </tr>`;
+        });
+    }
+
+    // ✅ [수정된 삭제 처리 함수]
+    async function deleteReservation(rDataJson) {
+        const target = JSON.parse(rDataJson);
+    
+        let inputPw = "";
+        if (!isAdmin) {
+            inputPw = prompt("예약 시 설정한 4자리 비밀번호를 입력하세요.");
+            if (inputPw === null) return;
+            if (inputPw.trim().length !== 4) { alert("비밀번호는 숫자 4자리입니다."); return; }
+        }
+
+        if (!confirm(`${target.date} ${target.startTime} 예약을 취소하시겠습니까?`)) return;
+
+        try {
+            const btn = event.target;
+            const row = btn.closest('tr'); // 클릭한 버튼이 포함된 행(TR) 찾기
+        
+            // 1. 화면에서 즉시 숨기기 (사용자는 바로 삭제된 것처럼 느낌)
+            row.style.transition = "all 0.4s ease";
+            row.style.opacity = "0";
+            row.style.transform = "translateX(20px)";
+        
+            // 2. 서버에 삭제 요청 보내기 (비동기 처리)
+            fetch(SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'text/plain' },
+                body: JSON.stringify({ 
+                    action: "delete", 
+                    studentId: String(target.studentId).trim(),
+                    date: String(target.date).trim(), 
+                    startTime: String(target.startTime).trim(), 
+                    password: String(inputPw).trim(), 
+                    isAdmin: isAdmin 
+                })
+            }).then(() => {
+                // 서버 작업이 끝나면 백그라운드에서 조용히 데이터 갱신
+                loadReservations();
+            });
+
+            // 3. 사용자에게는 즉시 알림 (기다릴 필요 없음)
+            // alert 대신 가벼운 메시지가 좋지만, 일단 alert를 쓴다면 바로 띄웁니다.
+            console.log("삭제 요청 완료"); 
+
+        } catch (e) { 
+            console.error(e);
+            alert("오류가 발생했습니다. 다시 시도해 주세요."); 
+            loadReservations(); // 실패 시 다시 불러와서 복구
+        }
+    }
+
+    // 예약 신청 이벤트
+    document.getElementById('reservationForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const studentIdInput = document.getElementById('studentId');
+        const passwordInput = document.getElementById('password');
+        const studentId = studentIdInput.value.trim();
+        const password = passwordInput.value.trim();
+
+        if (studentId.length !== 8) { alert("⚠️ 학번은 숫자 8자리여야 합니다."); return; }
+        if (password.length !== 4) { alert("⚠️ 예약 취소 비밀번호는 숫자 4자리여야 합니다."); return; }
+
+        const startTime = document.getElementById('startHour').value + ":" + document.getElementById('startMin').value;
+        const endTime = document.getElementById('endHour').value + ":" + document.getElementById('endMin').value;
+        const dateVal = document.getElementById('date').value;
+
+        if (endTime > "18:50") { alert("⚠️ 종료 시간은 18:50분을 넘길 수 없습니다."); return; }
+        if (startTime >= endTime) { alert("⚠️ 종료 시간은 시작 시간보다 늦어야 합니다."); return; }
+
+        const selectedDate = new Date(dateVal);
+        const today = new Date();
+        today.setHours(0,0,0,0);
+        if (selectedDate.getDay() === 0 || selectedDate.getDay() === 6) { alert("⚠️ 주말은 운영하지 않습니다."); return; }
+
+        const isOverlapping = reservations.some(r => {
+            if (r.date !== dateVal) return false;
+            return (startTime < r.endTime && endTime > r.startTime);
+        });
+        if (isOverlapping) { alert("⚠️ 해당 시간에 이미 예약이 존재합니다."); return; }
+
+        const btn = document.getElementById('submitBtn');
+        btn.disabled = true; btn.innerText = "처리 중...";
+
+        try {
+            const newRes = { 
+                studentId, 
+                name: document.getElementById('name').value, 
+                people: document.getElementById('people').value, 
+                date: dateVal, startTime, endTime, password 
+            };
+            
+            await fetch(SCRIPT_URL, { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'text/plain' }, 
+                body: JSON.stringify(newRes) 
+            });
+            
+            alert('예약이 완료되었습니다!');
+            this.reset();
+            populateSplitTimeDropdowns();
+            loadReservations();
+        } catch (e) { 
+            alert('오류가 발생했습니다.'); 
+        } finally { 
+            btn.disabled = false; btn.innerText = "예약하기"; 
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        populateSplitTimeDropdowns();
+        initCalendar();
+        loadReservations();
+    });
+</script>
+</body>
+</html>
